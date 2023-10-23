@@ -7,8 +7,7 @@
 
 set -e
 
-BSP=https://developer.nvidia.com/downloads/remetpack-463r32releasev73t210jetson-210linur3273aarch64tbz2
-
+BSP=https://developer.nvidia.com/downloads/embedded/l4t/r32_release_v7.4/t210/jetson-210_linux_r32.7.4_aarch64.tbz2
 # Check if the user is not root
 if [ "x$(whoami)" != "xroot" ]; then
         printf "\e[31mThis script requires root privilege\e[0m\n"
