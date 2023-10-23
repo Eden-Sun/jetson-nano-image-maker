@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  aarch64_job:
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,22 +24,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
       - name: Build docker image
-        run: docker buildx build --platform linux/arm64 -t jetson-nano-image .
+        run: docker build -t jetson-nano-image .
 
       - name: Export rootfs
         run: |
-          docker export $(docker create --name nano-rootfs --platform linux/arm64 jetson-nano-image) -o rootfs.tar
+          docker export $(docker create --name nano-rootfs jetson-nano-image) -o rootfs.tar
           docker rm nano-rootfs
           mkdir -p /tmp/jetson-builder/rootfs
           sudo tar --same-owner -xf rootfs.tar -C /tmp/jetson-builder/rootfs
 
       - name: Create jetson.img
         run: |
-          sudo apt install -y libxml2-utils
+          sudo apt update && apt install -y libxml2-utils
           sudo -E ./create-image.sh
 
       - name: Upload image
