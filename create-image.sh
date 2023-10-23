@@ -75,6 +75,15 @@ case "$JETSON_NANO_BOARD" in
         printf "[OK]\n"
         ;;
 
+    jetson-nano-emmc)
+        echo "Creating tbz2 for Jetson nano emmc productin board"
+
+        cd $JETSON_BUILD_DIR/Linux_for_Tegra
+        ROOTFS_DIR=$JETSON_ROOTFS_DIR \
+        BOARDID=3448 BOARDSKU=0002 FAB=200 FUSELEVEL=fuselevel_production  ./nvmassflashgen.sh jetson-nano-emmc mmcblk0p1
+
+        printf "[OK]\n"
+        ;;
     *)
 	printf "\e[31mUnknown Jetson nano board type\e[0m\n"
 	exit 1

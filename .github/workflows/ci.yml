@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - board: jetson-nano
+          - board: jetson-nano-emmc
             revision: 300
 
     env:
@@ -36,7 +36,8 @@ jobs:
 
       - name: Create jetson.img
         run: |
-          sudo apt update && apt install -y libxml2-utils
+          sudo apt update
+          sudo apt install -y libxml2-utils lbzip2 python3 bzip2
           sudo -E ./create-image.sh
 
       - name: Upload image
