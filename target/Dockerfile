@@ -29,6 +29,7 @@ RUN mkdir -p /opt/nvidia/l4t-packages
 RUN touch /opt/nvidia/l4t-packages/.nv-l4t-disable-boot-fw-update-in-preinstall
 
 COPY root/etc/apt/ /etc/apt
+COPY root/etc/ld.so.conf.d/nvidia-tegra.conf /root/etc/ld.so.conf.d/nvidia-tegra.conf
 COPY root/usr/share/keyrings /usr/share/keyrings
 RUN apt update
 
