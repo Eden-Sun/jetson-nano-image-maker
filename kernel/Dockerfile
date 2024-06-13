@@ -1,3 +1,4 @@
+# only 18.04 is supported for kernel compilation
 FROM ubuntu:18.04
 
 # xxd is for video
