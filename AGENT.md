@@ -188,16 +188,16 @@ Embedded DTB build time: `Jan 4 2023 10:02:03` (the integrator's custom build).
 
 Two paths, pick whichever fits the situation:
 
-**(A) Via this repo's image-maker pipeline (recommended for batch / CI)**
+**(A) Via this repo's image-maker pipeline (recommended for batch)**
 
-The same `slotA.dtb` is already pinned at `packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb` and wired into `packager/Dockerfile` + `create-image.sh`. Just run:
+The same `slotA.dtb` is already pinned at `packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb` and wired into `packager/Dockerfile`. Just run:
 
 ```bash
 ./make-image.sh
-# → <MMDDHHmm>.tbz2 (mass-flash bundle) appears in repo root
+# → MMDDHHMM-emmc.tbz2 (mass-flash bundle) appears in repo root
 ```
 
-Or push to a branch and let the GitHub Actions workflow produce `jetson.img` as an artifact. See `Readme.md → Fork — what's different from upstream`.
+See `Readme.md → Fork — what's different from upstream` for details and `BOOT-TEST.md` for non-destructive verification on a spare unit.
 
 **(B) Direct flash.sh on a JetPack 4.6.1 workstation (ad-hoc / single board)**
 
