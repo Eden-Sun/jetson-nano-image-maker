@@ -1,4 +1,65 @@
-# Jetson Nano Image
+# Jetson Nano Image (cface fork)
+
+> **Fork purpose.** Bake the dual-HDMI device tree blob from the deployed `cface-desktop` Jetson Nano into a fresh L4T image so we can flash replacement / spare units without re-doing the hardware-matching DTB by hand.
+
+## Fork — what's different from upstream
+
+The hardware in the field is a Jetson Nano eMMC carrier modified from the stock DP+HDMI layout to **dual HDMI**. The matching customised device tree (built `Jan 4 2023 10:02:03`) lives on the unit's eMMC DTB partition; if a new image is flashed with stock L4T DTB, the second HDMI does not light up. This fork drops that customised DTB into the BSP at packaging time.
+
+### Source of the DTB
+
+Extracted from `cface-desktop` (`/dev/mmcblk0p2`, FDT offset `0x400`, 219 257 bytes) on 2026-05-16. See [`AGENT.md`](AGENT.md) for the full host runbook and [`dtb-backup/dtb_dump/README.md`](dtb-backup/dtb_dump/README.md) for the extraction details and slot-A/B verification.
+
+- Pinned binary: `packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb`
+- sha256: `fd0d4179c7ec11686ab85d440c09ea4371db08c6aec419e10565b709f54c8849`
+
+### Approach
+
+Inject the DTB at the point where the L4T BSP is unpacked, *before* `nvmassflashgen.sh` is invoked — both in the local Docker path (`packager/Dockerfile`) and the CI path (`create-image.sh`). Two filenames are overwritten because L4T scripts reference both with and without the `kernel_` prefix:
+
+```
+Linux_for_Tegra/kernel/dtb/tegra210-p3448-0002-p3449-0000-b00.dtb
+Linux_for_Tegra/kernel/dtb/kernel_tegra210-p3448-0002-p3449-0000-b00.dtb
+```
+
+Files changed vs upstream `main`:
+
+| File | Change |
+|---|---|
+| `packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb` | **new** — the dual-HDMI DTB |
+| `packager/Dockerfile` | After `tar -xvf jetson-210_linux_r32.7.4_aarch64.tbz2`, `COPY` + `cp` the custom DTB over both BSP filenames |
+| `create-image.sh` | Before the `nvmassflashgen.sh` invocation, copy `$SCRIPT_DIR/packager/custom-dtb/*.dtb` into `$JETSON_BUILD_DIR/Linux_for_Tegra/kernel/dtb/` if present, and log the sha256 |
+
+The `target/Dockerfile` is **unchanged**. The custom DTB does not need to live in the rootfs because cboot on eMMC reads from the DTB partition, not `/boot/dtb/`. (If we later need a matching `/boot/dtb/` for OTA/debug parity, add a `COPY` there too.)
+
+### Verifying the injection (no flashing required)
+
+```shell
+# Build packager image, confirm the BSP inside has our DTB
+docker buildx build --platform linux/arm64 --load -t cface-packager:dual-hdmi ./packager
+
+docker run --rm --platform linux/arm64 cface-packager:dual-hdmi sh -c \
+  'sha256sum /tmp/Linux_for_Tegra/kernel/dtb/tegra210-p3448-0002-p3449-0000-b00.dtb \
+             /tmp/Linux_for_Tegra/kernel/dtb/kernel_tegra210-p3448-0002-p3449-0000-b00.dtb'
+# Both should print fd0d4179c7ec11686ab85d440c09ea4371db08c6aec419e10565b709f54c8849
+```
+
+### Building artifacts end-to-end
+
+```shell
+./make-image.sh
+# → MMDDHHMM-emmc.tbz2 (Jetson Nano eMMC mass-flash bundle with cface dual-HDMI DTB)
+```
+
+Validate it on a spare Nano without touching any unit's eMMC: see [`BOOT-TEST.md`](BOOT-TEST.md). The flow uses NVIDIA's RCM mode to load kernel + DTB into the Jetson's RAM over USB — the eMMC is not written, power-cycle reverts to the previous contents.
+
+### Updating the DTB
+
+If the field hardware customisation changes again, re-extract slotA.dtb from the donor unit (see `AGENT.md → DTB Backup`) and overwrite `packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb`. The sha256 in this Readme should be updated to match.
+
+---
+
+## Upstream README (Eden-Sun/jetson-nano-image-maker)
 
 > **tl;dr;** Build sd-card flashable images for [Jetson Nano](https://developer.nvidia.com/embedded/jetson-nano-developer-kit) dev kits using Docker and Github Actions.
 

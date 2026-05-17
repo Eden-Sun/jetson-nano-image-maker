@@ -1,1 +1,4 @@
 *.tbz2
+*.img
+rootfs.tar
+Linux_for_Tegra/

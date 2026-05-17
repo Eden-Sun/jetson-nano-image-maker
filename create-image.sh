@@ -7,6 +7,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOM_DTB="$SCRIPT_DIR/packager/custom-dtb/tegra210-p3448-0002-p3449-0000-b00.dtb"
+
 BSP=https://developer.nvidia.com/downloads/embedded/l4t/r32_release_v7.4/t210/jetson-210_linux_r32.7.4_aarch64.tbz2
 # Check if the user is not root
 if [ "x$(whoami)" != "xroot" ]; then
@@ -56,7 +59,15 @@ if [ ! "$(ls -A $JETSON_BUILD_DIR)" ]; then
                 # So we arbitraryly preallocate extra 128MiB ((rootfs_size + 128MiB + (rootfs_size / 10))
                 sed -i 's/rootfs_size +/rootfs_size + 128 +/g' "$JETSON_BUILD_DIR/Linux_for_Tegra/tools/jetson-disk-image-creator.sh"
                 ;;
-        esac     
+        esac
+fi
+
+# Inject custom dual-HDMI DTB (overrides factory dtb in the BSP)
+if [ -f "$CUSTOM_DTB" ]; then
+    printf "\e[32mInjecting custom DTB %s\n\e[0m" "$CUSTOM_DTB"
+    cp "$CUSTOM_DTB" "$JETSON_BUILD_DIR/Linux_for_Tegra/kernel/dtb/tegra210-p3448-0002-p3449-0000-b00.dtb"
+    cp "$CUSTOM_DTB" "$JETSON_BUILD_DIR/Linux_for_Tegra/kernel/dtb/kernel_tegra210-p3448-0002-p3449-0000-b00.dtb"
+    sha256sum "$JETSON_BUILD_DIR/Linux_for_Tegra/kernel/dtb/tegra210-p3448-0002-p3449-0000-b00.dtb"
 fi
 
 case "$JETSON_NANO_BOARD" in
@@ -80,7 +91,7 @@ case "$JETSON_NANO_BOARD" in
 
         cd $JETSON_BUILD_DIR/Linux_for_Tegra
         ROOTFS_DIR=$JETSON_ROOTFS_DIR \
-        BOARDID=3448 BOARDSKU=0002 FAB=200 FUSELEVEL=fuselevel_production  ./nvmassflashgen.sh jetson-nano-emmc mmcblk0p1
+        BOARDID=3448 BOARDSKU=0002 FAB=300 FUSELEVEL=fuselevel_production  ./nvmassflashgen.sh jetson-nano-emmc mmcblk0p1
 
         printf "[OK]\n"
         ;;
